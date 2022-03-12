@@ -68,8 +68,12 @@ jobs:
         ## Python Package Index
 
         Page provides py Index for TestHelper
-    
-        [test_helper-${{ env.VERSION }}](git+$GITHUB_SERVER_URL/$GITHUB_REPOSITORY#egg=test_helper-$PACKAGE_VER)
+
+        ## Usage
+
+        ```pip install git+$GITHUB_SERVER_URL/$GITHUB_REPOSITORY#egg=testhelper```
+  
+        [test_helper-${{ env.VERSION }}](git+$GITHUB_SERVER_URL/$GITHUB_REPOSITORY#egg=test_helper-${{ env.VERSION }})
         EOL
 
     - name: Deploy to GitHub Pages
@@ -87,8 +91,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ env.TAG }}
-        release_name: ${{ env.TAG }}
+        tag_name: release-${{ env.VERSION }}
+        release_name: release-${{ env.VERSION }}
         body: |
           Changes in this Release
         draft: false
