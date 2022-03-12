@@ -2,6 +2,12 @@
 
 A class to help with response, request, and expected results
 
+## Installation
+
+```bash 
+pip install git+https://github.com/erikdeirdre/test_helper#egg=testhelper
+```
+
 ## How to Use
 
 The class accepts 'text' and 'json' based files for storing response and request messages as well as Graphql variables.
