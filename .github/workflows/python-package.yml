@@ -53,27 +53,6 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Increment Version - if same as prior commit
-      run: |
-        VERSION_CHANGE=$(${GITHUB_WORKSPACE}/.github/workflows/diff_script.sh)
-        echo "VERSION_CHANGE=$VERSION_CHANGE" >> $GITHUB_ENV
-        echo "VERSION=$(cat VERSION)" >>$GITHUB_ENV
-
-    - name: Commit Updated Version File
-      if: env.VERSION_CHANGE == 1
-      uses: EndBug/add-and-commit@v7.4.0
-      with:
-        add: 'VERSION'
-        message: 'Updated VERSION file to version ${{ env.VERSION }}'
-
-    - name: Set Tag Name
-      id: set_tag
-      run: |
-        TAG="release-${{ env.VERSION }}"
-        echo "TAG=$TAG" >>$GITHUB_ENV
-        git tag $TAG
-        git push origin --tags
-
     - name: create package
       run: |
         python -m pip install --upgrade pip
@@ -84,6 +63,8 @@ jobs:
       run: |
         pip install --user --upgrade setuptools wheel pkutils
         python setup.py sdist bdist_wheel
+        VERSION=$(grep version= setup.py | awk -F"=" '{print $NF}' | sed -e "s/'//g" | sed -e "s/,//")
+        echo "VERSION=$VERSION">>$GITHUB_ENV
 
     - name: Update Github Page
       run: |
