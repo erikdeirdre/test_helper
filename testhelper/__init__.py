@@ -1,0 +1,7 @@
+__version__ = '0.1.0'
+__title__ = 'testhelper'
+__author__ = 'Peter White'
+__description__ = 'Package to help create test modules'
+__email__ = 'pwhite@delpwhite.org'
+__license__ = 'MIT'
+__copyright__ = 'Copyright 2021 Peter White'

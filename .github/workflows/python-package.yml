@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.7]
+        python-version: [3.8,3.9]
 
     steps:
     - uses: actions/checkout@v1
@@ -30,33 +30,67 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pip install -r test_requirements.txt
-        coverage run -m pytest --junitxml=test-results/test-results.xml
+        pip install -r test/requirements.txt
+        coverage run -m pytest --junitxml=coverage-reports/coverage.xml
 
-    - name: Generate reports
-      run: |
-        coverage report
-        coverage xml -o test-results/coverage.xml
-        coverage html
+    #- name: Generate reports
+    #  run: |
+    #    coverage report
+    #    coverage xml -o coverage-reports/coverage.xml
+    #    coverage html
 
-    - name: Publish reports
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
       env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  package:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      PYTHON_VERSION: 3.9
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: create package
       run: |
-        python-codacy-coverage -r test-results/coverage.xml
+        python -m pip install --upgrade pip
+        pip install --upgrade build
+        python -m build
 
     - name: create package
       run: |
         pip install --user --upgrade setuptools wheel pkutils
         python setup.py sdist bdist_wheel
 
-    - name: set variables
+    - name: Update Github Page
       run: |
-        echo ::set-env name=VERSION::$(python setup.py --version)
-        echo ::set-env name=RELEASE::release-$(python setup.py --version)
-        echo ::set-env name=ASSET_PATH::dist/testclass-$(python setup.py --version)-py3-none-any.whl
-        echo ::set-env name=ASSET_NAME::testclass-$(python setup.py --version)-py3-none-any.whl
+        mkdir public
+        PACKAGE_VER=$(cat VERSION)
+        cat >public/index.md <<EOL
+        ## Python Package Index
 
+        Page provides py Index for TestHelper
+    
+        [test_helper-${PACKAGE_VER}](git+$GITHUB_SERVER_URL/$GITHUB_REPOSITORY#egg=test_helper-$PACKAGE_VER)
+        EOL
+
+    - name: Deploy to GitHub Pages
+      if: success()
+      uses: crazy-max/ghaction-github-pages@v2
+      with:
+        target_branch: gh-pages
+        build_dir: public
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
     - name: create release
       id: create_release
       uses: actions/create-release@v1
@@ -69,14 +103,3 @@ jobs:
           Changes in this Release
         draft: false
         prerelease: false
-
-#    - name: Upload Release Asset
-#      id: upload-release-asset
-#      uses: actions/upload-release-asset@v1.0.1
-#      env:
-#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      with:
-#        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-#        asset_path: ${{ env.ASSET_PATH }}
-#        asset_name:  ${{ env.ASSET_NAME }}
-#        asset_content_type: application/zip
