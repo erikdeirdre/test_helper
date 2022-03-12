@@ -21,13 +21,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Lint with flake8
-      run: |
-        pip install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
     - name: Test with pytest
       run: |
         pip install -r tests/requirements.txt
@@ -59,6 +53,27 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
+    - name: Increment Version - if same as prior commit
+      run: |
+        VERSION_CHANGE=$(${GITHUB_WORKSPACE}/.github/workflows/diff_script.sh)
+        echo "VERSION_CHANGE=$VERSION_CHANGE" >> $GITHUB_ENV
+        echo "VERSION=$(cat VERSION)" >>$GITHUB_ENV
+
+    - name: Commit Updated Version File
+      if: env.VERSION_CHANGE == 1
+      uses: EndBug/add-and-commit@v7.4.0
+      with:
+        add: 'VERSION'
+        message: 'Updated VERSION file to version ${{ env.VERSION }}'
+
+    - name: Set Tag Name
+      id: set_tag
+      run: |
+        TAG="release-${{ env.VERSION }}"
+        echo "TAG=$TAG" >>$GITHUB_ENV
+        git tag $TAG
+        git push origin --tags
+
     - name: create package
       run: |
         python -m pip install --upgrade pip
@@ -73,13 +88,12 @@ jobs:
     - name: Update Github Page
       run: |
         mkdir public
-        PACKAGE_VER=$(cat VERSION)
         cat >public/index.md <<EOL
         ## Python Package Index
 
         Page provides py Index for TestHelper
     
-        [test_helper-${PACKAGE_VER}](git+$GITHUB_SERVER_URL/$GITHUB_REPOSITORY#egg=test_helper-$PACKAGE_VER)
+        [test_helper-${{ env.VERSION }}](git+$GITHUB_SERVER_URL/$GITHUB_REPOSITORY#egg=test_helper-$PACKAGE_VER)
         EOL
 
     - name: Deploy to GitHub Pages
@@ -97,8 +111,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ env.RELEASE }}
-        release_name: ${{ env.RELEASE }}
+        tag_name: ${{ env.TAG }}
+        release_name: ${{ env.TAG }}
         body: |
           Changes in this Release
         draft: false
