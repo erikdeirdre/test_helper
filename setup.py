@@ -3,8 +3,8 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open("VERSION", "r", encoding="utf-8") as fv:
-    version = fv.read()
+with open("VERSION", "r") as fv:
+    version = fv.read().rstrip()
 
 setuptools.setup(
     name='testhelper',
