@@ -5,12 +5,10 @@ from setuptools import setup
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-version = environ["VERSION"]
-
 setup(
     name='testhelper',
     packages=['testhelper'],
-    version=version,
+    version='0.4.0',
     description='A testing helper',
     long_description=long_description,
     long_description_content_type="text/markdown",
