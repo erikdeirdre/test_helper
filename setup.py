@@ -1,12 +1,13 @@
-import setuptools
+
+from os import environ
+from setuptools import setup
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open("VERSION", "r") as fv:
-    version = fv.read().rstrip()
+version = environ["VERSION"]
 
-setuptools.setup(
+setup(
     name='testhelper',
     packages=['testhelper'],
     version=version,
